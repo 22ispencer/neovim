@@ -28,6 +28,8 @@ vim.opt.mouse = ""
 vim.opt.scrolloff = 5
 vim.opt.clipboard = "unnamed,unnamedplus"
 vim.opt.foldmethod = "syntax"
+vim.opt.signcolumn = "yes:2"
+vim.opt.wrap = false
 vim.keymap.set("i", "<Tab>", [[pumvisible() ? "\<C-n>" : "\<Tab>"]], { expr = true })
 vim.keymap.set("i", "<S-Tab>", [[pumvisible() ? "\<C-p>" : "\<S-Tab>"]], { expr = true })
 
@@ -106,13 +108,18 @@ later(function()
 			miniclue.gen_clues.registers(),
 			miniclue.gen_clues.windows(),
 			miniclue.gen_clues.z(),
+			{ mode = "n", keys = "<Leader>f", desc = "+Find" },
+			{ mode = "n", keys = "<Leader>s", desc = "+Sessions" },
+			{ mode = "n", keys = "<Leader>c", desc = "+Code (LSP)" },
 		},
 	})
 	require("mini.comment").setup()
 	require("mini.completion").setup()
 	require("mini.cursorword").setup()
-	require("mini.extra").setup()
 	require("mini.files").setup()
+	vim.keymap.set("n", "<Leader>e", function()
+		MiniFiles.open(vim.api.nvim_buf_get_name(0))
+	end, { desc = "File Explorer" })
 	require("mini.fuzzy").setup()
 	require("mini.git").setup()
 	local hipatterns = require("mini.hipatterns")
@@ -146,11 +153,32 @@ later(function()
 	end, { desc = "Help" })
 	vim.keymap.set("n", "<Leader>fg", function()
 		MiniPick.builtin.live_grep({ tool = "rg" })
-	end, { desc = "Help" })
+	end, { desc = "Grep" })
+	-- Use mini.pick as a vim.ui.select replacement
+	vim.ui.select = MiniPick.ui_select
 	require("mini.sessions").setup()
+	vim.keymap.set("n", "<Leader>fs", MiniSessions.select, { desc = "Session" })
+	vim.keymap.set("n", "<Leader>sg", function()
+		vim.ui.input(
+			{ prompt = "Enter session name: " },
+			---@param sessionName string
+			function(sessionName)
+				if sessionName ~= nil then
+					MiniSessions.write(sessionName)
+				else
+					vim.notify("Canceled")
+				end
+			end
+		)
+	end, { desc = "Save (Global)" })
+	vim.keymap.set("n", "<Leader>sl", function()
+		MiniSessions.write("Session.vim")
+	end, { desc = "Save (Local)" })
 	require("mini.splitjoin").setup()
 	require("mini.surround").setup()
 	require("mini.trailspace").setup()
+	require("mini.extra").setup()
+	vim.keymap.set("n", "<Leader>fe", MiniExtra.pickers.diagnostic, { desc = "Error" })
 end)
 
 later(function()
@@ -183,7 +211,6 @@ later(function()
 end)
 
 later(function()
-	vim.keymap.set("n", "<Leader>cl", "<cmd>Lazy<cr>", { desc = "Lazy" })
 	vim.keymap.set("n", "<Leader>cd", vim.diagnostic.open_float, { desc = "Expand LSP diagnostics" })
 	vim.keymap.set("n", "<Leader>cn", vim.diagnostic.goto_next, { desc = "Next Error" })
 	vim.keymap.set("n", "<Leader>cp", vim.diagnostic.goto_prev, { desc = "Prev Error" })
