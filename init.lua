@@ -40,6 +40,7 @@ now(function()
 	vim.g.sonokai_style = "shusia"
 	vim.g.sonokai_better_performance = 1
 	vim.cmd.colorscheme("sonokai")
+	require("mini.sessions").setup()
 	local starter = require("mini.starter")
 	starter.setup({
 		items = {
@@ -156,7 +157,7 @@ later(function()
 	end, { desc = "Grep" })
 	-- Use mini.pick as a vim.ui.select replacement
 	vim.ui.select = MiniPick.ui_select
-	require("mini.sessions").setup()
+	-- mini.sessions
 	vim.keymap.set("n", "<Leader>fs", MiniSessions.select, { desc = "Session" })
 	vim.keymap.set("n", "<Leader>sg", function()
 		vim.ui.input(
