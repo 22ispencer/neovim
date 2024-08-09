@@ -153,7 +153,7 @@ later(function()
 		MiniPick.builtin.help({ tool = "fd" })
 	end, { desc = "Help" })
 	vim.keymap.set("n", "<Leader>fg", function()
-		MiniPick.builtin.live_grep({ tool = "rg" })
+		MiniPick.builtin.grep_live({ tool = "rg" })
 	end, { desc = "Grep" })
 	-- Use mini.pick as a vim.ui.select replacement
 	vim.ui.select = MiniPick.ui_select
