@@ -178,6 +178,7 @@ later(function()
 	require("mini.splitjoin").setup()
 	require("mini.surround").setup()
 	require("mini.trailspace").setup()
+	vim.keymap.set("n", "<Leader>ct", MiniTrailspace.trim, { desc = "Trim trailing spaces" })
 	require("mini.extra").setup()
 	vim.keymap.set("n", "<Leader>fe", MiniExtra.pickers.diagnostic, { desc = "Error" })
 end)
@@ -359,4 +360,8 @@ later(function()
 		source = "OXY2DEV/markview.nvim",
 		depends = { "nvim-treesitter/nvim-treesitter" },
 	})
+end)
+
+later(function()
+	add("edkolev/tmuxline.vim")
 end)
