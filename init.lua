@@ -21,6 +21,7 @@ require("mini.deps").setup({ path = { package = path_package } })
 ---@type function, function, function
 local add, now, later = MiniDeps.add, MiniDeps.now, MiniDeps.later
 
+vim.opt.cindent = true
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.relativenumber = true
@@ -29,7 +30,9 @@ vim.opt.scrolloff = 5
 vim.opt.clipboard = "unnamed,unnamedplus"
 vim.opt.foldmethod = "syntax"
 vim.opt.signcolumn = "yes:2"
+vim.opt.iskeyword:append("-")
 vim.opt.wrap = false
+vim.keymap.set("n", "U", "<C-r>")
 vim.keymap.set("i", "<Tab>", [[pumvisible() ? "\<C-n>" : "\<Tab>"]], { expr = true })
 vim.keymap.set("i", "<S-Tab>", [[pumvisible() ? "\<C-p>" : "\<S-Tab>"]], { expr = true })
 
@@ -43,6 +46,7 @@ now(function()
 	require("mini.sessions").setup()
 	local starter = require("mini.starter")
 	starter.setup({
+		autoopen = false,
 		items = {
 			starter.sections.sessions(),
 			starter.sections.recent_files(5, true),
@@ -53,6 +57,42 @@ now(function()
 	require("mini.icons").setup()
 	require("mini.statusline").setup()
 	require("mini.tabline").setup()
+
+	add({
+		source = "nvim-treesitter/nvim-treesitter",
+		-- Use 'master' while monitoring updates in 'main'
+		checkout = "master",
+		monitor = "main",
+		-- Perform action after every checkout
+		hooks = {
+			post_checkout = function()
+				vim.cmd("TSUpdate")
+			end,
+		},
+	})
+	-- Possible to immediately execute code which depends on the added plugin
+	require("nvim-treesitter.configs").setup({
+		ensure_installed = { "lua", "vimdoc", "typescript", "css", "html", "astro" },
+		highlight = { enable = true },
+	})
+
+	vim.api.nvim_create_autocmd({ "VimEnter" }, {
+		callback = function()
+			local cwd = vim.fn.getcwd()
+			if vim.fn.argc() > 0 then
+				return
+			end
+			if vim.fn.filereadable(cwd .. "/Session.vim") == 1 then
+				MiniSessions.read(nil, {
+					force = true,
+				})
+			else
+				MiniStarter.open()
+			end
+		end,
+		nested = true,
+		once = true,
+	})
 end)
 
 later(function()
@@ -175,32 +215,15 @@ later(function()
 	vim.keymap.set("n", "<Leader>sl", function()
 		MiniSessions.write("Session.vim")
 	end, { desc = "Save (Local)" })
+	vim.keymap.set("n", "<Leader>sd", function()
+		MiniSessions.select("delete")
+	end, { desc = "Delete" })
 	require("mini.splitjoin").setup()
 	require("mini.surround").setup()
 	require("mini.trailspace").setup()
 	vim.keymap.set("n", "<Leader>ct", MiniTrailspace.trim, { desc = "Trim trailing spaces" })
 	require("mini.extra").setup()
 	vim.keymap.set("n", "<Leader>fe", MiniExtra.pickers.diagnostic, { desc = "Error" })
-end)
-
-later(function()
-	add({
-		source = "nvim-treesitter/nvim-treesitter",
-		-- Use 'master' while monitoring updates in 'main'
-		checkout = "master",
-		monitor = "main",
-		-- Perform action after every checkout
-		hooks = {
-			post_checkout = function()
-				vim.cmd("TSUpdate")
-			end,
-		},
-	})
-	-- Possible to immediately execute code which depends on the added plugin
-	require("nvim-treesitter.configs").setup({
-		ensure_installed = { "lua", "vimdoc", "typescript", "css", "html", "astro" },
-		highlight = { enable = true },
-	})
 end)
 
 later(function()
@@ -367,4 +390,8 @@ end)
 
 later(function()
 	add("edkolev/tmuxline.vim")
+end)
+
+later(function()
+	add("leafOfTree/vim-svelte-plugin")
 end)
