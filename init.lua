@@ -76,6 +76,97 @@ now(function()
 		highlight = { enable = true },
 	})
 
+	-- nvim-lspconfig
+	add("neovim/nvim-lspconfig")
+	local lspconfig = require("lspconfig")
+	lspconfig.gleam.setup({})
+
+	-- mason
+	add("williamboman/mason.nvim")
+	require("mason").setup({
+		package_installed = "✓",
+		package_pending = "➜",
+		package_uninstalled = "✗",
+	})
+	vim.keymap.set("n", "<Leader>cm", "<cmd>Mason<cr>", { desc = "Mason" })
+
+	-- mason-lspconfig
+	add({
+		source = "williamboman/mason-lspconfig.nvim",
+		depends = {
+			"williamboman/mason.nvim",
+			"neovim/nvim-lspconfig",
+			"hrsh7th/nvim-cmp",
+			"hrsh7th/cmp-nvim-lsp",
+		},
+	})
+	require("mason-lspconfig").setup({
+		ensure_installed = {
+			"gopls",
+			"pyright",
+			"tsserver",
+			"tailwindcss",
+			"clangd",
+			"html",
+			"lua_ls",
+			"marksman",
+			"matlab_ls",
+		},
+	})
+
+	local capabilities = require("cmp_nvim_lsp").default_capabilities()
+	require("mason-lspconfig").setup_handlers({
+		function(server_name)
+			require("lspconfig")[server_name].setup({
+				capabilities = capabilities,
+			})
+		end,
+		["lua_ls"] = function()
+			require("lspconfig").lua_ls.setup({
+				on_init = function(client)
+					if client.workspace_folders == nil then
+						return
+					end
+					local path = client.workspace_folders[1].name
+					if vim.loop.fs_stat(path .. "/.luarc.json") or vim.loop.fs_stat(path .. "/.luarc.jsonc") then
+						return
+					end
+
+					client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua, {
+
+						runtime = {
+							-- Tell the language server which version of Lua you're using
+							-- (most likely LuaJIT in the case of Neovim)
+							version = "LuaJIT",
+						},
+						-- Make the server aware of Neovim runtime files
+						workspace = {
+							checkThirdParty = false,
+							library = {
+								vim.env.VIMRUNTIME,
+								-- Depending on the usage, you might want to add additional paths here.
+								-- "${3rd}/luv/library"
+								-- "${3rd}/busted/library",
+							},
+							-- or pull in all of 'runtimepath'. NOTE: this is a lot slower
+							-- library = vim.api.nvim_get_runtime_file("", true)
+						},
+					})
+				end,
+				settings = {
+					Lua = {},
+				},
+			})
+		end,
+	})
+	vim.lsp.handlers["textDocument/diagnostic"] = vim.lsp.with(vim.lsp.diagnostic.on_diagnostic, {
+		underline = true,
+		virtual_text = {
+			spacing = 4,
+		},
+		signs = false,
+	})
+
 	vim.api.nvim_create_autocmd({ "VimEnter" }, {
 		callback = function()
 			local cwd = vim.fn.getcwd()
@@ -92,6 +183,12 @@ now(function()
 		end,
 		nested = true,
 		once = true,
+	})
+end)
+now(function()
+	add({
+		source = "OXY2DEV/markview.nvim",
+		depends = { "nvim-treesitter/nvim-treesitter" },
 	})
 end)
 
@@ -244,97 +341,7 @@ later(function()
 	end, { desc = "Format buffer" })
 	vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, { desc = "Rename symbol" })
 	vim.keymap.set("n", "<Leader>ca", vim.lsp.buf.code_action, { desc = "Open code actions" })
-	add("neovim/nvim-lspconfig")
-	local lspconfig = require("lspconfig")
-	lspconfig.gleam.setup({})
-end)
-
-later(function()
-	add("williamboman/mason.nvim")
-	require("mason").setup({
-		package_installed = "✓",
-		package_pending = "➜",
-		package_uninstalled = "✗",
-	})
-	vim.keymap.set("n", "<Leader>cm", "<cmd>Mason<cr>", { desc = "Mason" })
-end)
-
-later(function()
-	add({
-		source = "williamboman/mason-lspconfig.nvim",
-		depends = {
-			"williamboman/mason.nvim",
-			"neovim/nvim-lspconfig",
-			"hrsh7th/nvim-cmp",
-			"hrsh7th/cmp-nvim-lsp",
-		},
-	})
-	require("mason-lspconfig").setup({
-		ensure_installed = {
-			"gopls",
-			"pyright",
-			"tsserver",
-			"tailwindcss",
-			"clangd",
-			"html",
-			"lua_ls",
-			"marksman",
-			"matlab_ls",
-		},
-	})
-
-	local capabilities = require("cmp_nvim_lsp").default_capabilities()
-	require("mason-lspconfig").setup_handlers({
-		function(server_name)
-			require("lspconfig")[server_name].setup({
-				capabilities = capabilities,
-			})
-		end,
-		["lua_ls"] = function()
-			require("lspconfig").lua_ls.setup({
-				on_init = function(client)
-					if client.workspace_folders == nil then
-						return
-					end
-					local path = client.workspace_folders[1].name
-					if vim.loop.fs_stat(path .. "/.luarc.json") or vim.loop.fs_stat(path .. "/.luarc.jsonc") then
-						return
-					end
-
-					client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua, {
-
-						runtime = {
-							-- Tell the language server which version of Lua you're using
-							-- (most likely LuaJIT in the case of Neovim)
-							version = "LuaJIT",
-						},
-						-- Make the server aware of Neovim runtime files
-						workspace = {
-							checkThirdParty = false,
-							library = {
-								vim.env.VIMRUNTIME,
-								-- Depending on the usage, you might want to add additional paths here.
-								-- "${3rd}/luv/library"
-								-- "${3rd}/busted/library",
-							},
-							-- or pull in all of 'runtimepath'. NOTE: this is a lot slower
-							-- library = vim.api.nvim_get_runtime_file("", true)
-						},
-					})
-				end,
-				settings = {
-					Lua = {},
-				},
-			})
-		end,
-	})
-	vim.lsp.handlers["textDocument/diagnostic"] = vim.lsp.with(vim.lsp.diagnostic.on_diagnostic, {
-		underline = true,
-		virtual_text = {
-			spacing = 4,
-		},
-		signs = false,
-	})
+	vim.keymap.set("n", "<Leader>ci", "<cmd>LspInfo<cr>", { desc = "LSP Info" })
 end)
 
 later(function()
@@ -378,13 +385,6 @@ later(function()
 			"clang-format",
 		},
 		handlers = {},
-	})
-end)
-
-later(function()
-	add({
-		source = "OXY2DEV/markview.nvim",
-		depends = { "nvim-treesitter/nvim-treesitter" },
 	})
 end)
 
