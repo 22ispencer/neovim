@@ -33,8 +33,20 @@ vim.opt.signcolumn = "yes:2"
 vim.opt.iskeyword:append("-")
 vim.opt.wrap = false
 vim.keymap.set("n", "U", "<C-r>")
-vim.keymap.set("i", "<Tab>", [[pumvisible() ? "\<C-n>" : "\<Tab>"]], { expr = true })
-vim.keymap.set("i", "<S-Tab>", [[pumvisible() ? "\<C-p>" : "\<S-Tab>"]], { expr = true })
+vim.keymap.set({ "i", "s" }, "<Tab>", function()
+	if vim.fn.pumvisible() == 1 then
+		return "<C-p>"
+	else
+		return "<Tab>"
+	end
+end, { expr = true })
+vim.keymap.set({ "i", "s" }, "<Tab>", function()
+	if vim.fn.pumvisible() == 1 then
+		return "<C-n>"
+	else
+		return "<S-Tab>"
+	end
+end, { expr = true })
 
 now(function()
 	add("sainnhe/sonokai")
@@ -88,7 +100,6 @@ now(function()
 		package_pending = "➜",
 		package_uninstalled = "✗",
 	})
-	vim.keymap.set("n", "<Leader>cm", "<cmd>Mason<cr>", { desc = "Mason" })
 
 	-- mason-lspconfig
 	add({
@@ -321,6 +332,7 @@ later(function()
 	vim.keymap.set("n", "<Leader>ct", MiniTrailspace.trim, { desc = "Trim trailing spaces" })
 	require("mini.extra").setup()
 	vim.keymap.set("n", "<Leader>fe", MiniExtra.pickers.diagnostic, { desc = "Error" })
+	vim.keymap.set("n", "<Leader>cm", "<cmd>Mason<cr>", { desc = "Mason" })
 end)
 
 later(function()
